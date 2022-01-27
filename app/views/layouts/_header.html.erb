@@ -3,7 +3,7 @@
     <%= link_to "Sample App", root_path, id:"logo" %>
     <nav>
         <ul class="nav navbar-nav navbar-right">
-        <li><%= link_to "Home", root_path %></li>
+        <li><%= link_to "Home", users_path %></li>
         <li><%= link_to "Help", help_path %></li>
 
         <% if !logged_in? %>
@@ -16,7 +16,7 @@
 
                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
                     <li><%= link_to "Profile", current_user, class: 'dropdown-item' %></li>
-                    <li><%= link_to "Setting", "#", class: 'dropdown-item' %></li>
+                    <li><%= link_to "Setting", edit_user_path(current_user), class: 'dropdown-item' %></li>
                     <li class="divider"></li>
                     <li><%= link_to "Log out", logout_path, class: 'dropdown-item', method: :delete %></li>
                 </ul>
