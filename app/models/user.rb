@@ -1,8 +1,11 @@
 class User < ApplicationRecord
+    has_many    :microposts, dependent: :destroy
+    # public accessor (same as getter/setter)
     attr_accessor   :remember_token, :activation_token, :reset_token
     VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
-
+    # email in database should be lowercase
     before_save :downcase_email 
+    # create activation digest for user when created
     before_create   :create_activation_digest 
 
     validates   :name, presence: true, length: {maximum: 50} 
@@ -12,15 +15,16 @@ class User < ApplicationRecord
                         uniqueness: {case_sensitive: false}
 
     validates   :password, length: {minimum: 6}
-
+    # save password into database in form of hashed digest
     has_secure_password
 
+    # generate digest from a given string
     def User.digest(string) 
         cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST : BCrypt::Engine.cost
-
         BCrypt::Password.create(string, cost: cost)
     end
 
+    # generate random token using SecureRandom.urlsafe_base64
     def User.generate_token 
         SecureRandom.urlsafe_base64
     end
@@ -38,19 +42,23 @@ class User < ApplicationRecord
         BCrypt::Password.new(digest).is_password?(token)
     end
 
+    # remove remember digest from user in the database
     def forget 
         update_attribute(:remember_digest, nil)
     end
 
+    # lower case email
     def downcase_email
         self.email = email.downcase
     end
 
+    # generate activation digest
     def create_activation_digest
         self.activation_token   =   User.generate_token
         self.activation_digest  =   User.digest(activation_token)
     end
 
+    # update activation status 
     def activate 
         user.update_attribute(:activated, true)
         user.update_attribute(:activated_at, Time.zone.now)
@@ -67,7 +75,7 @@ class User < ApplicationRecord
         self.update_attribute(:reset_sent_at, Time.zone.now)
     end
 
-    # send a reset email to the user's email 
+    # send a reset password email to the user's email 
     def send_password_reset_email
         UserMailer.password_reset(self).deliver_now
     end
@@ -75,5 +83,10 @@ class User < ApplicationRecord
     # check expiration of the reset digest
     def password_reset_expired?
         self.reset_sent_at < 2.hours.ago 
+    end
+
+    # get all micropost of this user
+    def feed
+        Micropost.where("user_id=?", id)
     end
 end
